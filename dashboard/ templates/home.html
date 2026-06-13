@@ -1,1 +1,51 @@
-
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block page_title %}Home{% endblock %}
+{% block page_subtitle %}Live Server Statistics{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon">🎫</div><div class="stat-value">{{ stats.tickets }}</div><div class="stat-label">Total Tickets</div></div>
+  <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">{{ stats.orders }}</div><div class="stat-label">Total Deals</div></div>
+  <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value">{{ stats.warnings }}</div><div class="stat-label">Total Warnings</div></div>
+  <div class="stat-card"><div class="stat-icon">🎙️</div><div class="stat-value">{{ stats.voice_calls }}</div><div class="stat-label">Voice Calls</div></div>
+</div>
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">🏆 Top Sellers</div><a href="/marketplace" class="btn btn-gold">View All</a></div>
+    <div class="table-wrap">
+      <div class="table-row header" style="grid-template-columns:36px 1fr 56px 80px"><div>#</div><div>Seller</div><div>Deals</div><div>Ratio</div></div>
+      {% if top_sellers %}{% for s in top_sellers %}
+      <div class="table-row" style="grid-template-columns:36px 1fr 56px 80px">
+        <div style="font-family:'Cinzel',serif;color:var(--gold)">{% if loop.index==1 %}🥇{% elif loop.index==2 %}🥈{% else %}🥉{% endif %}</div>
+        <div>{{ s.username }}</div><div style="color:var(--text-dim)">{{ s.total }}</div>
+        <div><span style="color:var(--gold);font-size:12px">{{ s.ratio }}%</span><div class="ratio-bar-wrap"><div class="ratio-bar" style="width:{{ s.ratio }}%"></div></div></div>
+      </div>
+      {% endfor %}{% else %}<div class="empty-state">NO DATA YET</div>{% endif %}
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">📜 Recent Activity</div><a href="/logs" class="btn btn-gold">View All</a></div>
+    <div class="table-wrap">
+      <div class="table-row header" style="grid-template-columns:80px 1fr 80px"><div>Type</div><div>Event</div><div>Time</div></div>
+      {% if recent_logs %}{% for l in recent_logs %}
+      <div class="table-row" style="grid-template-columns:80px 1fr 80px">
+        <div><span class="badge badge-{{ l.type }}">{{ l.type }}</span></div>
+        <div style="font-size:12px">{{ l.title }}</div>
+        <div style="font-size:10px;color:var(--text-dim)">{{ l.time }}</div>
+      </div>
+      {% endfor %}{% else %}<div class="empty-state">NO LOGS YET</div>{% endif %}
+    </div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-header"><div class="section-title">⚡ Quick Links</div></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <a href="/tickets" class="btn btn-gold" style="padding:12px 20px">🎫 Tickets</a>
+    <a href="/moderation" class="btn btn-danger" style="padding:12px 20px">🛡️ Moderation</a>
+    <a href="/voice" class="btn btn-green" style="padding:12px 20px">🎙️ Voice Relay</a>
+    <a href="/embeds" class="btn btn-blue" style="padding:12px 20px">✉️ Send Embed</a>
+    <a href="/logs" class="btn btn-gold" style="padding:12px 20px">📜 Logs</a>
+    <a href="/settings" class="btn btn-gold" style="padding:12px 20px">⚙️ Settings</a>
+  </div>
+</div>
+{% endblock %}
