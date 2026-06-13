@@ -1,1 +1,54 @@
-
+{% extends "base.html" %}
+{% block title %}Security{% endblock %}
+{% block page_title %}Security{% endblock %}
+{% block page_subtitle %}Anti-Raid, Anti-Spam & AutoMod{% endblock %}
+{% block content %}
+<form method="POST" action="/save_security">
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">🛡️ Protection Toggles</div></div>
+    <div class="card">
+      {% for key, label, desc in [
+        ('anti_raid','Anti Raid','Block mass joins in short time'),
+        ('anti_bot','Anti Bot','Block unauthorized bot accounts'),
+        ('anti_scam','Anti Scam Links','Block scam/phishing URLs'),
+        ('anti_mention','Anti Mention Spam','Limit mass mentions'),
+        ('anti_spam','Anti Spam','Auto-timeout spammers'),
+        ('anti_links','Anti Links','Block links outside allowed channels')
+      ] %}
+      <div class="toggle-wrap">
+        <div>
+          <div class="toggle-label">{{ label }}</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">{{ desc }}</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="{{ key }}" {% if config.get(key) %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <div class="section">
+      <div class="section-header"><div class="section-title">⚙️ Limits</div></div>
+      <div class="card">
+        <div class="form-group"><label class="form-label">Spam Message Limit (per window)</label><input class="form-input" type="number" name="spam_limit" value="{{ config.get('spam_limit',5) }}" min="2" max="20"></div>
+        <div class="form-group"><label class="form-label">Spam Time Window (seconds)</label><input class="form-input" type="number" name="spam_window" value="{{ config.get('spam_window',5) }}" min="1" max="60"></div>
+        <div class="form-group"><label class="form-label">Max Mentions per Message</label><input class="form-input" type="number" name="mention_limit" value="{{ config.get('mention_limit',5) }}" min="1" max="50"></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-title">🤬 Bad Words List</div></div>
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">One word per line</label>
+          <textarea class="form-input" name="bad_words_list" rows="8" placeholder="word1&#10;word2&#10;...">{{ bad_words | join('\n') }}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<button class="btn btn-gold" type="submit" style="padding:10px 28px;font-size:14px">💾 Save Security Settings</button>
+</form>
+{% endblock %}
