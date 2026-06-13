@@ -1,1 +1,50 @@
-
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Bot Settings{% endblock %}
+{% block page_subtitle %}Channel IDs, Systems & Customization{% endblock %}
+{% block content %}
+<form method="POST" action="/save_settings">
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">📡 Channel IDs</div></div>
+    <div class="card">
+      {% for name, key, ph in [
+        ('Log Channel','log_channel','1505308788780040222'),
+        ('Ticket Channel','ticket_channel','1505921799978881105'),
+        ('Order Channel','order_channel','1504265744719020122'),
+        ('Feedback Channel','feedback_channel','1506926493798764635'),
+        ('Welcome Channel','welcome_channel','1505922477753368740'),
+        ('Leaderboard Channel','lb_channel','1505922561903562812')
+      ] %}
+      <div class="form-group"><label class="form-label">{{ name }}</label><input class="form-input" name="{{ key }}" value="{{ config.get(key,'') }}" placeholder="{{ ph }}"></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <div class="section">
+      <div class="section-header"><div class="section-title">🎨 Customization</div></div>
+      <div class="card">
+        <div class="form-group"><label class="form-label">Footer Text</label><input class="form-input" name="footer" value="{{ config.get('footer','Powered by MEM Development | Deaplo') }}" placeholder="Footer text"></div>
+        <div class="form-group"><label class="form-label">Default Embed Color</label><input class="form-input" type="color" name="embed_color" value="{{ config.get('embed_color','#1a2332') }}" style="height:42px;padding:4px 8px;cursor:pointer"></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-title">🔌 Toggle Systems</div></div>
+      <div class="card">
+        {% set systems = config.get('systems', {}) %}
+        {% for key, label in [('sys_tickets','🎫 Ticket System'),('sys_orders','🛒 Orders System'),('sys_welcome','👋 Welcome System'),('sys_automod','🛡️ AutoMod'),('sys_leaderboard','🏆 Leaderboard'),('sys_logging','📜 Logging')] %}
+        <div class="toggle-wrap">
+          <span class="toggle-label">{{ label }}</span>
+          <label class="toggle">
+            <input type="checkbox" name="{{ key }}" {% if systems.get(key[4:], True) %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+<button class="btn btn-gold" type="submit" style="padding:10px 28px;font-size:14px">💾 Save Settings</button>
+</form>
+{% endblock %}
