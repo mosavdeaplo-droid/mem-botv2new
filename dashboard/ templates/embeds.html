@@ -1,1 +1,47 @@
-
+{% extends "base.html" %}
+{% block title %}Embeds{% endblock %}
+{% block page_title %}Embed Builder{% endblock %}
+{% block page_subtitle %}Create & Send Discord Embeds{% endblock %}
+{% block content %}
+{% if flash_msg %}
+  <div class="{% if '✅' in flash_msg %}flash-success{% else %}flash-error{% endif %}">{{ flash_msg }}</div>
+{% endif %}
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">✉️ Build Embed</div></div>
+    <div class="card">
+      <form method="POST" action="/send_embed">
+        <div class="form-group"><label class="form-label">Channel ID *</label><input class="form-input" name="channel_id" value="{{ form_data.channel_id if form_data else '' }}" placeholder="Discord Channel ID" required></div>
+        <div class="form-group"><label class="form-label">Title</label><input class="form-input" name="title" value="{{ form_data.title if form_data else '' }}" placeholder="Embed title"></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" name="description" rows="5" placeholder="Embed description (supports markdown)">{{ form_data.description if form_data else '' }}</textarea></div>
+        <div class="grid-2" style="gap:10px">
+          <div class="form-group"><label class="form-label">Color</label><input class="form-input" name="color" type="color" value="#{{ form_data.color if form_data else '1a2332' }}" style="height:42px;padding:4px 8px;cursor:pointer"></div>
+          <div class="form-group"><label class="form-label">Footer Text</label><input class="form-input" name="footer" value="{{ form_data.footer if form_data else 'Powered by MEM Development | Deaplo' }}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Image URL (bottom)</label><input class="form-input" name="image_url" value="{{ form_data.image_url if form_data else '' }}" placeholder="https://..."></div>
+        <div class="form-group"><label class="form-label">Thumbnail URL (top right)</label><input class="form-input" name="thumbnail" value="{{ form_data.thumbnail if form_data else '' }}" placeholder="https://..."></div>
+        <div class="form-check"><input type="checkbox" name="save_embed" id="save_embed"><label for="save_embed">Save this embed for later</label></div>
+        <button class="btn btn-gold" type="submit" style="margin-top:14px;padding:10px 24px;font-size:14px">🚀 Send Embed</button>
+      </form>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">💾 Saved Embeds</div></div>
+    {% if saved_embeds %}
+    <div style="display:flex;flex-direction:column;gap:10px">
+      {% for e in saved_embeds %}
+      <div class="card" style="padding:14px">
+        <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:4px">{{ e.title or '(No Title)' }}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px">{{ e.description[:80] if e.description else '' }}{% if e.description and e.description|length > 80 %}...{% endif %}</div>
+        <form method="POST" action="/delete_embed/{{ e.id }}" style="display:inline" onsubmit="return confirm('Delete this saved embed?')">
+          <button class="btn btn-danger" type="submit" style="font-size:11px;padding:4px 12px">Delete</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="empty-state">NO SAVED EMBEDS</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
