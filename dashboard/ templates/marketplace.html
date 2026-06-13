@@ -1,1 +1,62 @@
-
+{% extends "base.html" %}
+{% block title %}Marketplace{% endblock %}
+{% block page_title %}Marketplace{% endblock %}
+{% block page_subtitle %}Orders, Feedback & Leaderboard{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">🏆 Seller Leaderboard</div>
+    <form method="POST" action="/reset_leaderboard" onsubmit="return confirm('Reset entire leaderboard?')">
+      <button class="btn btn-danger" type="submit">Reset All</button>
+    </form>
+  </div>
+  <div class="table-wrap">
+    <div class="table-row header" style="grid-template-columns:40px 1fr 70px 70px 70px 90px 80px">
+      <div>#</div><div>Seller</div><div>Total</div><div>👍</div><div>👎</div><div>Ratio</div><div>Action</div>
+    </div>
+    {% if leaderboard %}{% for s in leaderboard %}
+    <div class="table-row" style="grid-template-columns:40px 1fr 70px 70px 70px 90px 80px">
+      <div style="font-family:'Cinzel',serif;color:var(--gold)">
+        {% if s.rank==1 %}🥇{% elif s.rank==2 %}🥈{% elif s.rank==3 %}🥉{% else %}#{{ s.rank }}{% endif %}
+      </div>
+      <div>{{ s.username }}<div style="font-size:10px;color:var(--text-dim)">ID: {{ s.seller_id }}</div></div>
+      <div style="color:var(--text-dim)">{{ s.total }}</div>
+      <div style="color:var(--green)">{{ s.positive }}</div>
+      <div style="color:var(--red)">{{ s.negative }}</div>
+      <div><span style="color:var(--gold);font-size:12px">{{ s.ratio }}%</span><div class="ratio-bar-wrap"><div class="ratio-bar" style="width:{{ s.ratio }}%"></div></div></div>
+      <div>
+        <form method="POST" action="/delete_seller/{{ s.id }}" style="display:inline" onsubmit="return confirm('Remove this seller?')">
+          <button class="btn btn-danger" type="submit">Del</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}{% else %}<div class="empty-state">NO SELLERS YET</div>{% endif %}
+  </div>
+</div>
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">📦 Recent Orders</div></div>
+    <div class="table-wrap">
+      <div class="table-row header" style="grid-template-columns:1fr 90px"><div>Event</div><div>Time</div></div>
+      {% if orders %}{% for o in orders %}
+      <div class="table-row" style="grid-template-columns:1fr 90px">
+        <div style="font-size:12px">{{ o.title }}<div style="font-size:11px;color:var(--text-dim)">{{ o.description[:60] if o.description else '' }}...</div></div>
+        <div style="font-size:10px;color:var(--text-dim)">{{ o.time }}</div>
+      </div>
+      {% endfor %}{% else %}<div class="empty-state">NO ORDERS YET</div>{% endif %}
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">💬 Recent Feedback</div></div>
+    <div class="table-wrap">
+      <div class="table-row header" style="grid-template-columns:1fr 90px"><div>Event</div><div>Time</div></div>
+      {% if feedback %}{% for f in feedback %}
+      <div class="table-row" style="grid-template-columns:1fr 90px">
+        <div style="font-size:12px">{{ f.title }}<div style="font-size:11px;color:var(--text-dim)">{{ f.description[:60] if f.description else '' }}</div></div>
+        <div style="font-size:10px;color:var(--text-dim)">{{ f.time }}</div>
+      </div>
+      {% endfor %}{% else %}<div class="empty-state">NO FEEDBACK YET</div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
