@@ -1,1 +1,127 @@
-
+{% extends "base.html" %}
+{% block title %}Moderation{% endblock %}
+{% block page_title %}Moderation{% endblock %}
+{% block page_subtitle %}Warnings, Bans & Blacklist{% endblock %}
+{% block title %}Logs{% endblock %}
+{% block page_title %}Logs{% endblock %}
+{% block page_subtitle %}Server Activity Logs{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value">{{ stats.total }}</div><div class="stat-label">Warnings</div></div>
+  <div class="stat-card"><div class="stat-icon">🔨</div><div class="stat-value">{{ stats.bans }}</div><div class="stat-label">Bans</div></div>
+  <div class="stat-card"><div class="stat-icon">👢</div><div class="stat-value">{{ stats.kicks }}</div><div class="stat-label">Kicks</div></div>
+  <div class="stat-card"><div class="stat-icon">⏰</div><div class="stat-value">{{ stats.timeouts }}</div><div class="stat-label">Timeouts</div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+  <!-- Filter Buttons -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    {% for t in log_types %}
+    <a href="/logs?type={{ t }}"
+       class="btn {% if current_type == t %}btn-gold{% else %}btn-blue{% endif %}"
+       style="font-size:11px;padding:6px 14px;letter-spacing:1px">
+      {% if t == 'all' %}📋{% elif t == 'moderation' %}🛡️{% elif t == 'ticket' %}🎫{% elif t == 'member' %}👤{% elif t == 'message' %}✉️{% elif t == 'order' %}📦{% elif t == 'automod' %}🤖{% elif t == 'voice' %}🎙️{% else %}📁{% endif %}
+      {{ t }}
+    </a>
+    {% endfor %}
+  </div>
+  <!-- Clear Button -->
+  <form method="POST" action="/clear_logs" onsubmit="return confirm('⚠️ حذف كل السجلات؟')">
+    <button class="btn btn-danger" type="submit" style="padding:6px 16px">🗑️ Clear All</button>
+  </form>
+</div>
+<div class="section">
+  <div class="section-header"><div class="section-title">⚠️ Warnings</div></div>
+  <div class="table-wrap">
+    <div class="table-row header" style="grid-template-columns:1fr 1fr 1fr 100px 110px">
+      <div>User</div><div>Reason</div><div>By</div><div>Time</div><div>Actions</div>
+<!-- Logs Table -->
+<div class="table-wrap">
+  <div class="table-row header" style="grid-template-columns:90px 1.2fr 2fr 110px">
+    <div>Type</div>
+    <div>Event</div>
+    <div>Details</div>
+    <div>Time</div>
+  </div>
+  {% if logs %}
+    {% for l in logs %}
+    <div class="table-row" style="grid-template-columns:90px 1.2fr 2fr 110px">
+      <div>
+        <span class="badge badge-{{ l.type }}">
+          {% if l.type == 'moderation' %}🛡️{% elif l.type == 'ticket' %}🎫{% elif l.type == 'member' %}👤{% elif l.type == 'message' %}✉️{% elif l.type == 'order' %}📦{% elif l.type == 'automod' %}🤖{% elif l.type == 'voice' %}🎙️{% else %}📁{% endif %}
+          {{ l.type }}
+        </span>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">{{ l.title }}</div>
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.5">{{ l.description[:120] }}{% if l.description|length > 120 %}...{% endif %}</div>
+      <div style="font-size:10px;color:var(--text-dim)">{{ l.time }}</div>
+    </div>
+    {% if warns %}{% for w in warns %}
+    <div class="table-row" style="grid-template-columns:1fr 1fr 1fr 100px 110px">
+      <div>{{ w.username }}<div style="font-size:10px;color:var(--text-dim)">{{ w.user_id }}</div></div>
+      <div style="font-size:12px;color:var(--yellow)">{{ w.reason }}</div>
+      <div style="font-size:12px;color:var(--text-dim)">{{ w.by }}</div>
+      <div style="font-size:10px;color:var(--text-dim)">{{ w.time }}</div>
+      <div style="display:flex;gap:4px">
+        <form method="POST" action="/delete_warning/{{ w.id }}">
+          <button class="btn btn-danger" type="submit" style="font-size:11px;padding:4px 10px">Del</button>
+        </form>
+        <form method="POST" action="/clear_user_warnings/{{ w.user_id }}" onsubmit="return confirm('Clear ALL warnings for this user?')">
+          <button class="btn btn-gold" type="submit" style="font-size:11px;padding:4px 10px">Clear All</button>
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:40px">
+      📭 NO LOGS{% if current_type != 'all' %} — Type: <strong>{{ current_type }}</strong>{% endif %}
+    </div>
+    {% endfor %}{% else %}<div class="empty-state">NO WARNINGS</div>{% endif %}
+  </div>
+  {% endif %}
+</div>
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">🚫 Blacklist</div></div>
+    <div class="card" style="margin-bottom:14px">
+      <form method="POST" action="/add_blacklist">
+        <div class="grid-2" style="gap:10px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">User ID</label><input class="form-input" name="user_id" placeholder="Discord User ID" required></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Reason</label><input class="form-input" name="reason" placeholder="Reason"></div>
+        </div>
+        <button class="btn btn-danger" type="submit" style="margin-top:12px">Add to Blacklist</button>
+      </form>
+    </div>
+    <div class="table-wrap">
+      <div class="table-row header" style="grid-template-columns:1fr 1fr 80px"><div>User</div><div>Reason</div><div>Action</div></div>
+      {% if blacklist %}{% for b in blacklist %}
+      <div class="table-row" style="grid-template-columns:1fr 1fr 80px">
+        <div>{{ b.username }}<div style="font-size:10px;color:var(--text-dim)">{{ b.user_id }}</div></div>
+        <div style="font-size:12px;color:var(--text-dim)">{{ b.reason }}</div>
+        <div>
+          <form method="POST" action="/remove_blacklist/{{ b.id }}">
+            <button class="btn btn-green" type="submit" style="font-size:11px;padding:4px 10px">Remove</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}{% else %}<div class="empty-state">BLACKLIST EMPTY</div>{% endif %}
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">📊 Mod Stats</div></div>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        {% for label, val, color in [('Total Warnings', stats.total, 'var(--yellow)'), ('Total Bans', stats.bans, 'var(--red)'), ('Total Kicks', stats.kicks, 'var(--red)'), ('Total Timeouts', stats.timeouts, 'var(--yellow)')] %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:13px;letter-spacing:1px">{{ label }}</span>
+          <span style="font-family:'Cinzel',serif;font-size:20px;color:{{ color }}">{{ val }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+<!-- Count Info -->
+{% if logs %}
+<div style="margin-top:12px;font-size:11px;letter-spacing:1px;color:var(--text-dim);text-align:right">
+  Showing <span style="color:var(--gold)">{{ logs|length }}</span> entries
+  {% if current_type != 'all' %} — filtered by <span style="color:var(--gold)">{{ current_type }}</span>{% endif %}
+</div>
+{% endif %}
+{% endblock %}
