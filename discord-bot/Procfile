@@ -1,1 +1,2 @@
-python-3.11.9
+bot: python bot.py
+web: python dashboard/app.py
