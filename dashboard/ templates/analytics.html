@@ -1,1 +1,62 @@
-
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block page_subtitle %}Server Statistics & Insights{% endblock %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon">🎫</div><div class="stat-value">{{ stats.tickets }}</div><div class="stat-label">Total Tickets</div></div>
+  <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value">{{ stats.orders }}</div><div class="stat-label">Total Deals</div></div>
+  <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value">{{ stats.warnings }}</div><div class="stat-label">Warnings</div></div>
+  <div class="stat-card"><div class="stat-icon">📜</div><div class="stat-value">{{ stats.logs }}</div><div class="stat-label">Total Logs</div></div>
+</div>
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">📊 Log Breakdown</div></div>
+    <div class="card">
+      {% for type, count in type_counts.items() %}
+      {% set total = stats.logs if stats.logs > 0 else 1 %}
+      {% set pct = ((count / total) * 100)|round(1) %}
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span class="badge badge-{{ type }}" style="font-size:11px">{{ type }}</span>
+          <span style="font-size:12px;color:var(--text-dim)">{{ count }} <span style="color:var(--gold)">{{ pct }}%</span></span>
+        </div>
+        <div class="ratio-bar-wrap" style="height:7px"><div class="ratio-bar" style="width:{{ pct }}%"></div></div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:20px">NO LOG DATA YET</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">🎫 Ticket Types</div></div>
+    <div class="card">
+      {% for label, val, color in [('💰 Sell', stats.sell, 'var(--gold)'), ('🛒 Buy', stats.buy, 'var(--green)'), ('🤝 Partner', stats.partner, '#7289da')] %}
+      {% set total = stats.tickets if stats.tickets > 0 else 1 %}
+      {% set pct = ((val / total) * 100)|round(1) %}
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:13px;letter-spacing:1px">{{ label }}</span>
+          <span style="font-size:12px;color:var(--text-dim)">{{ val }} <span style="color:{{ color }}">{{ pct }}%</span></span>
+        </div>
+        <div class="ratio-bar-wrap" style="height:7px"><div style="height:100%;border-radius:99px;background:{{ color }};width:{{ pct }}%"></div></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="section" style="margin-top:18px">
+      <div class="section-header"><div class="section-title">🏆 Top Sellers</div></div>
+      <div class="table-wrap">
+        <div class="table-row header" style="grid-template-columns:30px 1fr 60px 70px"><div>#</div><div>Seller</div><div>Deals</div><div>Rate</div></div>
+        {% if top_sellers %}{% for s in top_sellers %}
+        <div class="table-row" style="grid-template-columns:30px 1fr 60px 70px">
+          <div style="color:var(--gold);font-size:12px">{{ loop.index }}</div>
+          <div style="font-size:12px">{{ s.username }}</div>
+          <div style="color:var(--text-dim);font-size:12px">{{ s.total }}</div>
+          <div style="color:var(--gold);font-size:12px">{{ s.ratio }}%</div>
+        </div>
+        {% endfor %}{% else %}<div class="empty-state">NO DATA</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
