@@ -1,1 +1,58 @@
-
+{% extends "base.html" %}
+{% block title %}Roles{% endblock %}
+{% block page_title %}Roles{% endblock %}
+{% block page_subtitle %}Self Roles & Game Roles Management{% endblock %}
+{% block content %}
+<form method="POST" action="/save_roles">
+<div class="grid-2">
+  <div class="section">
+    <div class="section-header"><div class="section-title">🌍 Language Roles</div></div>
+    <div class="card">
+      <div id="lang-roles">
+        {% for name, role_id in language_roles.items() %}
+        <div class="role-row" style="display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin-bottom:10px;align-items:center">
+          <input class="form-input" name="lang_name" value="{{ name }}" placeholder="Role Name" style="margin-bottom:0">
+          <input class="form-input" name="lang_id" value="{{ role_id }}" placeholder="Role ID" style="margin-bottom:0">
+          <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding:8px;font-size:16px;line-height:1">✕</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" onclick="addRole('lang')" class="btn btn-green" style="margin-top:8px;width:100%">+ Add Language Role</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">🎮 Game Roles</div></div>
+    <div class="card">
+      <div id="game-roles">
+        {% for name, role_id in game_roles.items() %}
+        <div class="role-row" style="display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin-bottom:10px;align-items:center">
+          <input class="form-input" name="game_name" value="{{ name }}" placeholder="Role Name" style="margin-bottom:0">
+          <input class="form-input" name="game_id" value="{{ role_id }}" placeholder="Role ID" style="margin-bottom:0">
+          <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding:8px;font-size:16px;line-height:1">✕</button>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" onclick="addRole('game')" class="btn btn-green" style="margin-top:8px;width:100%">+ Add Game Role</button>
+    </div>
+  </div>
+</div>
+<div style="margin-top:8px">
+  <button class="btn btn-gold" type="submit" style="padding:10px 28px;font-size:14px">💾 Save All Roles</button>
+</div>
+</form>
+<script>
+function addRole(type) {
+  const container = document.getElementById(type+'-roles');
+  const div = document.createElement('div');
+  div.className = 'role-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin-bottom:10px;align-items:center';
+  const nameField = type === 'lang' ? 'lang_name' : 'game_name';
+  const idField   = type === 'lang' ? 'lang_id'   : 'game_id';
+  div.innerHTML = `
+    <input class="form-input" name="${nameField}" placeholder="Role Name" style="margin-bottom:0">
+    <input class="form-input" name="${idField}" placeholder="Role ID" style="margin-bottom:0">
+    <button type="button" onclick="this.parentElement.remove()" class="btn btn-danger" style="padding:8px;font-size:16px;line-height:1">✕</button>`;
+  container.appendChild(div);
+}
+</script>
+{% endblock %}
