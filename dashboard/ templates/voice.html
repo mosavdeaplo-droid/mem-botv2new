@@ -1,1 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Voice Relay{% endblock %}
+{% block page_title %}Voice Relay{% endblock %}
+{% block page_subtitle %}Push-to-Talk via Browser{% endblock %}
+{% block extra_style %}
+<style>
+.voice-layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+.ptt-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center;}
+.ws-bar{display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;color:var(--text-dim);}
+.ws-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.ws-dot.online{background:#22c55e;box-shadow:0 0 6px #22c55e88;animation:dpulse 2s infinite;}
+.ws-dot.offline{background:var(--red);}
+.ws-dot.connecting{background:var(--gold);animation:dpulse 1s infinite;}
+@keyframes dpulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ch-badge{background:rgba(201,168,76,0.08);border:1px solid var(--gold-dim);border-radius:8px;padding:10px 16px;font-family:'Cinzel',serif;font-size:12px;color:var(--gold);letter-spacing:2px;margin-bottom:18px;min-height:40px;display:flex;align-items:center;justify-content:center;text-align:center;}
+.ptt-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;margin:6px 0 12px;}
+.ptt-ring{position:absolute;inset:-10px;border-radius:50%;border:2px solid transparent;transition:all .3s;pointer-events:none;}
+.ptt-ring.active{border-color:var(--red);box-shadow:0 0 24px rgba(231,76,60,.4);animation:pring 1s infinite;}
+@keyframes pring{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+#ptt{width:130px;height:130px;border-radius:50%;border:3px solid var(--gold-dim);background:rgba(201,168,76,.07);color:var(--gold);font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;outline:none;user-select:none;}
+#ptt:hover:not(.off){border-color:var(--gold);background:rgba(201,168,76,.14);}
+#ptt.on{background:rgba(231,76,60,.15);border-color:var(--red);color:var(--red);}
+#ptt.off{opacity:.4;cursor:not-allowed;border-color:var(--text-dim);color:var(--text-dim);}
+#ptt svg{width:38px;height:38px;}
+.kb-hint{font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;}
+.err{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:var(--red);border-radius:8px;padding:8px 12px;font-size:12px;margin-top:10px;display:none;}
+.vstat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+.vstat-box{background:var(--surface2);border-radius:10px;padding:14px;text-align:center;}
+.vstat-val{font-family:'Cinzel',serif;font-size:22px;color:var(--gold);}
+.vstat-lbl{font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-top:3px;}
+.live-pill{display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red);font-size:10px;letter-spacing:2px;padding:3px 10px;border-radius:99px;margin-left:8px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.info-label{font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:6px;}
+.info-value{font-family:'Cinzel',serif;font-size:18px;color:var(--gold);}
+.members-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.member-chip{background:rgba(201,168,76,0.08);border:1px solid var(--gold-dim);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--text);}
+</style>
+{% endblock %}
+{% block content %}
+<div class="voice-layout">
 
+  <!-- LEFT: PTT Card -->
+  <div class="ptt-card">
+    <div class="ws-bar">
+      <span class="ws-dot connecting" id="wsd"></span>
+      <span id="wsl">Connecting...</span>
+      <span id="bname" style="display:none;color:var(--gold);margin-left:6px;font-size:11px"></span>
+    </div>
+    <div class="ch-badge">
+      <span id="chtext" style="color:var(--text-dim)">Run /join in Discord first</span>
+    </div>
+    <div style="margin-bottom:10px;display:none" id="members-wrap">
+      <div class="members-list" id="members-list"></div>
+    </div>
+    <div class="ptt-wrap">
+      <div class="ptt-ring" id="pttr"></div>
+      <button id="ptt" class="off"
+        onmousedown="startT()" onmouseup="stopT()" onmouseleave="stopT()"
+        ontouchstart="(e)=>{e.preventDefault();startT()}"
+        ontouchend="(e)=>{e.preventDefault();stopT()}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 1 3 3v8a3 3 0 0 1-6 0V4a3 3 0 0 1 3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+        </svg>
+        <span id="pttlbl">PUSH TO TALK</span>
+      </button>
+    </div>
+    <p class="kb-hint">Hold Spacebar or click</p>
+    <div class="err" id="errd"></div>
+    <div class="vstat-grid">
+      <div class="vstat-box"><div class="vstat-val">{{ total_calls }}</div><div class="vstat-lbl">Total Calls</div></div>
+      <div class="vstat-box"><div class="vstat-val">{{ total_duration }}</div><div class="vstat-lbl">Total Time</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Info & History -->
+  <div>
+    <!-- Live Info -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">📡 Live Connection Info</div>
+        <span class="live-pill" id="livepill">● LIVE</span>
+      </div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-label">Bot Status</div>
+          <div class="info-value" id="bot-status-val" style="color:var(--text-dim)">Offline</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Voice Channel</div>
+          <div class="info-value" id="vc-name" style="font-size:14px;color:var(--text-dim)">Not Connected</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">Session Started</div>
+          <div class="info-value" id="session-start" style="font-size:14px;color:var(--text-dim)">—</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">WebSocket</div>
+          <div class="info-value" id="ws-status-val" style="font-size:14px;color:var(--text-dim)">Disconnected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call History -->
+    <div class="section">
+      <div class="section-header"><div class="section-title">📞 Call History</div></div>
+      <div class="table-wrap">
+        <div class="table-row header" style="grid-template-columns:1.2fr 1fr 1fr 1fr 80px">
+          <div>Channel</div><div>Started By</div><div>Start</div><div>End</div><div>Duration</div>
+        </div>
+        {% if calls %}
+          {% for c in calls %}
+          <div class="table-row" style="grid-template-columns:1.2fr 1fr 1fr 1fr 80px">
+            <div style="color:var(--gold)">🔊 {{ c.channel }}</div>
+            <div style="font-size:12px;color:var(--text-dim)">{{ c.started_by }}</div>
+            <div style="font-size:11px;color:var(--text-dim)">{{ c.start }}</div>
+            <div style="font-size:11px;color:var(--text-dim)">{{ c.end }}</div>
+            <div style="font-size:12px;color:var(--green)">{{ c.duration }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">NO CALLS YET — Use /join in Discord to start</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WS_URL = {{ ws_url | tojson }};
+let ws, stream, ctx, wnode, snode, talking = false;
+
+function setWS(state, label) {
+  document.getElementById('wsd').className = 'ws-dot ' + state;
+  document.getElementById('wsl').textContent = label;
+  document.getElementById('ws-status-val').textContent = state === 'online' ? 'Connected' : state === 'connecting' ? 'Connecting...' : 'Disconnected';
+  document.getElementById('ws-status-val').style.color = state === 'online' ? 'var(--green)' : state === 'connecting' ? 'var(--gold)' : 'var(--red)';
+  document.getElementById('ptt').className = state === 'online' ? '' : 'off';
+}
+
+function showErr(m) {
+  const e = document.getElementById('errd');
+  e.textContent = m; e.style.display = m ? '' : 'none';
+}
+
+function setJoined(channel, start, members) {
+  document.getElementById('chtext').textContent = '🔊 ' + channel;
+  document.getElementById('chtext').style.color = '';
+  document.getElementById('vc-name').textContent = channel;
+  document.getElementById('vc-name').style.color = 'var(--gold)';
+  document.getElementById('livepill').style.display = '';
+  if (start) {
+    try {
+      const d = new Date(start);
+      document.getElementById('session-start').textContent = d.toLocaleTimeString();
+      document.getElementById('session-start').style.color = 'var(--text)';
+    } catch(_) {}
+  }
+  if (members && members.length > 0) {
+    const wrap = document.getElementById('members-wrap');
+    const list = document.getElementById('members-list');
+    list.innerHTML = members.map(m => `<span class="member-chip">👤 ${m}</span>`).join('');
+    wrap.style.display = '';
+  }
+}
+
+function setLeft() {
+  document.getElementById('chtext').textContent = 'Run /join in Discord first';
+  document.getElementById('chtext').style.color = 'var(--text-dim)';
+  document.getElementById('vc-name').textContent = 'Not Connected';
+  document.getElementById('vc-name').style.color = 'var(--text-dim)';
+  document.getElementById('livepill').style.display = 'none';
+  document.getElementById('session-start').textContent = '—';
+  document.getElementById('session-start').style.color = 'var(--text-dim)';
+  document.getElementById('members-wrap').style.display = 'none';
+  if (talking) stopT();
+}
+
+function connect() {
+  setWS('connecting', 'Connecting...');
+  ws = new WebSocket(WS_URL);
+  ws.binaryType = 'arraybuffer';
+  ws.onopen = () => setWS('online', 'Online');
+  ws.onmessage = (e) => {
+    try {
+      const m = JSON.parse(e.data);
+      if (m.type === 'bot_ready') {
+        document.getElementById('bname').textContent = m.user;
+        document.getElementById('bname').style.display = '';
+        document.getElementById('bot-status-val').textContent = m.user;
+        document.getElementById('bot-status-val').style.color = 'var(--green)';
+      } else if (m.type === 'joined') {
+        setJoined(m.channel, m.start, m.members || []);
+      } else if (m.type === 'left') {
+        setLeft();
+        setTimeout(() => location.reload(), 2000);
+      }
+    } catch(_) {}
+  };
+  ws.onclose = () => { setWS('offline', 'Offline'); setTimeout(connect, 3000); };
+  ws.onerror = () => ws.close();
+}
+
+async function startT() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  talking = true;
+  document.getElementById('ptt').className = 'on';
+  document.getElementById('pttlbl').textContent = 'TALKING';
+  document.getElementById('pttr').classList.add('active');
+  showErr('');
+  try {
+    if (!stream) stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+    });
+    if (!ctx) ctx = new AudioContext({ sampleRate: 48000 });
+    await ctx.resume();
+    if (!snode) snode = ctx.createMediaStreamSource(stream);
+    await ctx.audioWorklet.addModule('/static/audio-processor.js');
+    wnode = new AudioWorkletNode(ctx, 'mic-processor');
+    wnode.port.onmessage = (e) => {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(e.data);
+    };
+    snode.connect(wnode);
+    wnode.connect(ctx.destination);
+  } catch(err) { showErr('Mic error: ' + err.message); stopT(); }
+}
+
+function stopT() {
+  if (!talking) return;
+  talking = false;
+  const state = ws?.readyState === WebSocket.OPEN;
+  document.getElementById('ptt').className = state ? '' : 'off';
+  document.getElementById('pttlbl').textContent = 'PUSH TO TALK';
+  document.getElementById('pttr').classList.remove('active');
+  try { wnode?.disconnect(); } catch(_) {}
+  try { snode?.disconnect(); } catch(_) {}
+  wnode = null;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat && !['INPUT','TEXTAREA'].includes(e.target.tagName)) {
+    e.preventDefault(); startT();
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space') { e.preventDefault(); stopT(); }
+});
+
+connect();
+</script>
+{% endblock %}
